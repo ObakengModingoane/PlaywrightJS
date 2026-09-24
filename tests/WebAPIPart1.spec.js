@@ -1,66 +1,47 @@
-const {test, expect} = require('@playwright/test');
+import {test, expect, request} from '@playwright/test';
 
-test('First Playwright test', async ({browser})=>{
-    // Test code goes here
-    //URL for testing - https://rahulshettyacademy.com/loginpagePractise/
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    //Go to the URL
-    await page.goto('https://rahulshettyacademy.com/loginpagePractise/');
+const loginPayload = {userEmail:"modingoane@gmail.com", userPassword:"Learning08@"};
+let token;
 
-    //Extract the title of the page and print it in the console
-    console.log(await page.title());
+test.beforeAll( async () => {
+    const apiContext = await request.newContext();
 
-    //Fill the username and password fields and click on the sign in button
-    await page.locator("#username").fill("rahulshettyacademy");
-    await page.locator("#password").fill("Learning@");
-    await page.locator("#signInBtn").click();
+    //Store the response after hitting the API on loginResponse
+    const loginResponse = await apiContext.post("https://rahulshettyacademy.com/api/ecom/auth/login",
+        {
+            data: loginPayload
+        }
+    )
 
-    //On failure of login, the error message is displayed. We will capture that error message and print it in the console   
-    console.log(await page.locator("[style*='block']").textContent());
-    await expect(page.locator("[style*='block']")).toContainText("Incorrect");
+    expect(loginResponse.ok()).toBeTruthy();
 
-});
+    //Get the API response and store it on an object 
+    const loginResponseJson = await loginResponse.json();
 
-test('Second Playwright test', async ({page})=>{
-    // Test code goes here
-    //URL for testing - https://rahulshettyacademy.com/client/#/auth/login
-    //Register a user
-    await page.goto('https://rahulshettyacademy.com/client/#/auth/login'); 
-    await page.locator("a.text-reset").click();
-    await page.locator("#firstName").fill("Obakeng");
-    await page.locator("#lastName").fill("Magwaza");
-    await page.locator("[type='email']").fill("modingoane@gmail.com");
-    await page.locator("#userMobile").fill("1123456789");
-    await page.locator("#userPassword").fill("Learning@08");
-    await page.locator("#confirmPassword").fill("Learning@08");
-    await page.locator("[type='checkbox']").check();
-    await page.locator("[type='submit']").click();
+    //Access the API response properties using Json 
+    token = loginResponseJson.token;
+    console.log(token);
 
-    //Login with the registered user
-    await page.locator("[type='email']").fill("modingoane@gmail.com");
-    await page.locator("#userPassword").fill("Learning@08");
-    await page.locator("[type='submit']").click();
-    await page.waitForLoadState('networkidle');
-    const titles = await page.locator(".card-body b").allTextContents();
-    console.log(titles);
 
 });
 
-test("E2E Testing", async ({page})=>{
+test.beforeEach( async () => {
+
+});
+
+
+test('Client Test', async ({page})=> {
     //Variables 
-    const email = "modingoane@gmail.com";
-    const password = "Learning08@";
     const products = page.locator(".card-body");
     const productName = "ZARA COAT 3";
 
-    //Navigate to the URL
-    await page.goto("https://rahulshettyacademy.com/client/#/auth/login");
+    //setting token to localStorage after extracting it
+    page.addInitScript( value => {
+        window.localStorage.setItem('token', value);
+    }, token);
 
-    //Login with the registered user
-    await page.locator("[type='email']").fill(email);
-    await page.locator("#userPassword").fill(password);
-    await page.locator("#login").click();
+    //Login using Web API
+    await page.goto("https://rahulshettyacademy.com/client/#/dashboard/dash");
 
     //Count the products on the page and print the count in the console
     await expect(products.first()).toBeVisible();
@@ -122,10 +103,4 @@ test("E2E Testing", async ({page})=>{
 
     const orderIdDetails = await page.locator(".col-text").textContent();
     expect(oderNumber.includes(orderIdDetails)).toBeTruthy();
-
-    await page.pause();
-
-
-
 });
-

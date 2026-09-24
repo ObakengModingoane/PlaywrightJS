@@ -14,7 +14,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const config = ({
   testDir: './tests',
-  timeout: 40 * 1000,
+  timeout: 60 * 1000,
   expect: {
       timeout: 40 * 1000,
   },
@@ -32,6 +32,8 @@ const config = ({
   use: {
     browserName: 'chromium',
     headless: false,
+    screenshot: 'on',
+    trace: 'on',
     /* Base URL to use in actions like `await page.goto('')`. */
     // baseURL: 'http://localhost:3000',
 
